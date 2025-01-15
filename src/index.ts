@@ -41,30 +41,30 @@ class ShannonThinkingServer {
 
   private validateThoughtData(input: unknown): ShannonThoughtData {
     const data = input as Record<string, unknown>;
-
+    
     if (!data.thought || typeof data.thought !== 'string') {
-      throw new Error('Invalid thought: must be a string');
+      throw new Error(`Invalid thought: must be a string, received ${typeof data.thought}`);
     }
     if (!data.thoughtType || !Object.values(ThoughtType).includes(data.thoughtType as ThoughtType)) {
-      throw new Error('Invalid thoughtType: must be one of the defined ThoughtType values');
+      throw new Error(`Invalid thoughtType: must be one of: ${Object.values(ThoughtType).join(', ')}, received ${data.thoughtType}`);
     }
     if (!data.thoughtNumber || typeof data.thoughtNumber !== 'number') {
-      throw new Error('Invalid thoughtNumber: must be a number');
+      throw new Error(`Invalid thoughtNumber: must be a number, received ${typeof data.thoughtNumber}`);
     }
     if (!data.totalThoughts || typeof data.totalThoughts !== 'number') {
-      throw new Error('Invalid totalThoughts: must be a number');
+      throw new Error(`Invalid totalThoughts: must be a number, received ${typeof data.totalThoughts}`);
     }
     if (typeof data.uncertainty !== 'number' || data.uncertainty < 0 || data.uncertainty > 1) {
-      throw new Error('Invalid uncertainty: must be a number between 0 and 1');
+      throw new Error(`Invalid uncertainty: must be a number between 0 and 1, received ${data.uncertainty}`);
     }
     if (!Array.isArray(data.dependencies)) {
-      throw new Error('Invalid dependencies: must be an array of thought numbers');
+      throw new Error(`Invalid dependencies: must be an array, received ${typeof data.dependencies}`);
     }
     if (!Array.isArray(data.assumptions)) {
-      throw new Error('Invalid assumptions: must be an array of strings');
+      throw new Error(`Invalid assumptions: must be an array, received ${typeof data.assumptions}`);
     }
     if (typeof data.nextThoughtNeeded !== 'boolean') {
-      throw new Error('Invalid nextThoughtNeeded: must be a boolean');
+      throw new Error(`Invalid nextThoughtNeeded: must be a boolean, received ${typeof data.nextThoughtNeeded}`);
     }
 
     // Optional proofElements validation
@@ -105,6 +105,18 @@ class ShannonThinkingServer {
 
   private formatThought(thoughtData: ShannonThoughtData): string {
     const { thoughtNumber, totalThoughts, thought, thoughtType, uncertainty, dependencies } = thoughtData;
+    
+    // Enhanced console output for debugging
+    console.error(`Processing thought ${thoughtNumber}/${totalThoughts}`);
+    console.error(`Type: ${thoughtType}`);
+    console.error(`Dependencies: ${dependencies.join(', ') || 'none'}`);
+    console.error(`Uncertainty: ${uncertainty}`);
+    if (thoughtData.proofElements) {
+      console.error('Proof elements present');
+    }
+    if (thoughtData.implementationNotes) {
+      console.error('Implementation notes present');
+    }
 
     const typeColors = {
       [ThoughtType.ABSTRACTION]: chalk.blue,
@@ -197,6 +209,12 @@ class ShannonThinkingServer {
           type: "text",
           text: JSON.stringify({
             error: error instanceof Error ? error.message : String(error),
+            details: {
+              receivedInput: JSON.stringify(input, null, 2),
+              thoughtHistoryLength: this.thoughtHistory.length,
+              lastValidThought: this.thoughtHistory.length > 0 ? 
+                this.thoughtHistory[this.thoughtHistory.length - 1].thoughtNumber : null
+            },
             status: 'failed'
           }, null, 2)
         }],
