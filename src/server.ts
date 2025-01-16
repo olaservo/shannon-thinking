@@ -32,6 +32,20 @@ export class ShannonThinkingServer {
       throw new Error(`Invalid nextThoughtNeeded: must be a boolean, received ${typeof data.nextThoughtNeeded}`);
     }
 
+    // Optional recheckStep validation
+    if (data.recheckStep) {
+      const recheck = data.recheckStep as Record<string, unknown>;
+      if (!recheck.stepToRecheck || !Object.values(ThoughtType).includes(recheck.stepToRecheck as ThoughtType)) {
+        throw new Error('Invalid recheckStep: stepToRecheck must be a valid ThoughtType');
+      }
+      if (!recheck.reason || typeof recheck.reason !== 'string') {
+        throw new Error('Invalid recheckStep: reason must be a string');
+      }
+      if (recheck.newInformation && typeof recheck.newInformation !== 'string') {
+        throw new Error('Invalid recheckStep: newInformation must be a string if provided');
+      }
+    }
+
     // Optional proofElements validation
     if (data.proofElements) {
       const proof = data.proofElements as Record<string, unknown>;
@@ -40,6 +54,23 @@ export class ShannonThinkingServer {
       }
       if (!proof.validation || typeof proof.validation !== 'string') {
         throw new Error('Invalid proofElements: validation must be a string');
+      }
+    }
+
+    // Optional experimentalElements validation
+    if (data.experimentalElements) {
+      const exp = data.experimentalElements as Record<string, unknown>;
+      if (!exp.testDescription || typeof exp.testDescription !== 'string') {
+        throw new Error('Invalid experimentalElements: testDescription must be a string');
+      }
+      if (!exp.results || typeof exp.results !== 'string') {
+        throw new Error('Invalid experimentalElements: results must be a string');
+      }
+      if (typeof exp.confidence !== 'number' || exp.confidence < 0 || exp.confidence > 1) {
+        throw new Error('Invalid experimentalElements: confidence must be a number between 0 and 1');
+      }
+      if (!Array.isArray(exp.limitations)) {
+        throw new Error('Invalid experimentalElements: limitations must be an array');
       }
     }
 
@@ -54,6 +85,19 @@ export class ShannonThinkingServer {
       }
     }
 
+    // Optional revision validation
+    if (data.isRevision !== undefined && typeof data.isRevision !== 'boolean') {
+      throw new Error('Invalid isRevision: must be a boolean if provided');
+    }
+    if (data.revisesThought !== undefined) {
+      if (typeof data.revisesThought !== 'number' || data.revisesThought < 1) {
+        throw new Error('Invalid revisesThought: must be a positive number if provided');
+      }
+      if (!data.isRevision) {
+        throw new Error('Invalid revisesThought: cannot be set without isRevision being true');
+      }
+    }
+
     return {
       thought: data.thought as string,
       thoughtType: data.thoughtType as ThoughtType,
@@ -63,8 +107,12 @@ export class ShannonThinkingServer {
       dependencies: data.dependencies as number[],
       assumptions: data.assumptions as string[],
       nextThoughtNeeded: data.nextThoughtNeeded as boolean,
+      recheckStep: data.recheckStep as ShannonThoughtData['recheckStep'],
       proofElements: data.proofElements as ShannonThoughtData['proofElements'],
+      experimentalElements: data.experimentalElements as ShannonThoughtData['experimentalElements'],
       implementationNotes: data.implementationNotes as ShannonThoughtData['implementationNotes'],
+      isRevision: data.isRevision as boolean | undefined,
+      revisesThought: data.revisesThought as number | undefined,
     };
   }
 
@@ -83,16 +131,16 @@ export class ShannonThinkingServer {
       console.error('Implementation notes present');
     }
 
-    const typeColors = {
-      [ThoughtType.ABSTRACTION]: chalk.blue,
+    const typeColors: Record<ThoughtType, (text: string) => string> = {
+      [ThoughtType.PROBLEM_DEFINITION]: chalk.blue,
       [ThoughtType.CONSTRAINTS]: chalk.yellow,
       [ThoughtType.MODEL]: chalk.green,
       [ThoughtType.PROOF]: chalk.magenta,
       [ThoughtType.IMPLEMENTATION]: chalk.cyan
     };
 
-    const typeSymbols = {
-      [ThoughtType.ABSTRACTION]: '🔍',
+    const typeSymbols: Record<ThoughtType, string> = {
+      [ThoughtType.PROBLEM_DEFINITION]: '🔍',
       [ThoughtType.CONSTRAINTS]: '🔒',
       [ThoughtType.MODEL]: '📐',
       [ThoughtType.PROOF]: '✓',
@@ -109,18 +157,39 @@ export class ShannonThinkingServer {
 
     let output = `
 ┌${border}┐
-│ ${header} │
-├${border}┤
-│ ${thought.padEnd(border.length - 2)} │`;
+│ ${header} │`;
+
+    if (thoughtData.isRevision) {
+      output += `\n├${border}┤\n│ 🔄 Revising thought ${thoughtData.revisesThought} │`;
+    }
+
+    output += `\n├${border}┤\n│ ${thought.padEnd(border.length - 2)} │`;
 
     if (thoughtData.assumptions && thoughtData.assumptions.length > 0) {
       output += `\n├${border}┤\n│ Assumptions: ${thoughtData.assumptions.join(', ')} │`;
+    }
+
+    if (thoughtData.recheckStep) {
+      output += `\n├${border}┤
+│ Rechecking Step: ${thoughtData.recheckStep.stepToRecheck.padEnd(border.length - 17)} │
+│ Reason: ${thoughtData.recheckStep.reason.padEnd(border.length - 9)} │`;
+      if (thoughtData.recheckStep.newInformation) {
+        output += `\n│ New Information: ${thoughtData.recheckStep.newInformation.padEnd(border.length - 17)} │`;
+      }
     }
 
     if (thoughtData.proofElements) {
       output += `\n├${border}┤
 │ Proof Hypothesis: ${thoughtData.proofElements.hypothesis.padEnd(border.length - 18)} │
 │ Validation: ${thoughtData.proofElements.validation.padEnd(border.length - 13)} │`;
+    }
+
+    if (thoughtData.experimentalElements) {
+      output += `\n├${border}┤
+│ Test Description: ${thoughtData.experimentalElements.testDescription.padEnd(border.length - 18)} │
+│ Results: ${thoughtData.experimentalElements.results.padEnd(border.length - 10)} │
+│ Test Confidence: ${(thoughtData.experimentalElements.confidence * 100).toFixed(1)}% │
+│ Limitations: ${thoughtData.experimentalElements.limitations.join(', ').padEnd(border.length - 13)} │`;
     }
 
     if (thoughtData.implementationNotes) {
@@ -141,13 +210,23 @@ export class ShannonThinkingServer {
         validatedInput.totalThoughts = validatedInput.thoughtNumber;
       }
 
-      // Validate dependencies
+      // Validate dependencies and revisions
       for (const depNumber of validatedInput.dependencies) {
         if (depNumber >= validatedInput.thoughtNumber) {
           throw new Error(`Invalid dependency: cannot depend on future thought ${depNumber}`);
         }
         if (!this.thoughtHistory.some(t => t.thoughtNumber === depNumber)) {
           throw new Error(`Invalid dependency: thought ${depNumber} does not exist`);
+        }
+      }
+
+      // Validate revision target
+      if (validatedInput.isRevision && validatedInput.revisesThought !== undefined) {
+        if (validatedInput.revisesThought >= validatedInput.thoughtNumber) {
+          throw new Error(`Invalid revision: cannot revise future thought ${validatedInput.revisesThought}`);
+        }
+        if (!this.thoughtHistory.some(t => t.thoughtNumber === validatedInput.revisesThought)) {
+          throw new Error(`Invalid revision: thought ${validatedInput.revisesThought} does not exist`);
         }
       }
 
@@ -164,7 +243,11 @@ export class ShannonThinkingServer {
             nextThoughtNeeded: validatedInput.nextThoughtNeeded,
             thoughtType: validatedInput.thoughtType,
             uncertainty: validatedInput.uncertainty,
-            thoughtHistoryLength: this.thoughtHistory.length
+            thoughtHistoryLength: this.thoughtHistory.length,
+            isRevision: validatedInput.isRevision,
+            revisesThought: validatedInput.revisesThought,
+            hasExperimentalValidation: !!validatedInput.experimentalElements,
+            hasRecheckStep: !!validatedInput.recheckStep
           }, null, 2)
         }]
       };

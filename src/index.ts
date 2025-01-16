@@ -12,15 +12,16 @@ import { ShannonThinkingServer } from "./server.js";
 
 /**
  * Tool definition for the Shannon Thinking problem-solving methodology.
- * This tool implements Claude Shannon's systematic approach to complex problems,
- * breaking them down into clear steps of abstraction, modeling, and implementation.
+ * This tool implements Claude Shannon's systematic and iterative approach to complex problems,
+ * breaking them down into clear steps of problem definition, modeling, validation, and implementation.
+ * It supports revisions and re-examination as understanding evolves.
  */
 
 const SHANNON_THINKING_TOOL: Tool = {
   name: "shannonthinking",
-  description: `A problem-solving tool inspired by Claude Shannon's systematic approach to complex problems.
+  description: `A problem-solving tool inspired by Claude Shannon's systematic and iterative approach to complex problems.
 
-This tool helps break down problems using Shannon's methodology of abstraction, mathematical modeling, and practical implementation.
+This tool helps break down problems using Shannon's methodology of problem definition, mathematical modeling, validation, and practical implementation.
 
 When to use this tool:
 - Complex system analysis
@@ -29,30 +30,38 @@ When to use this tool:
 - Problems requiring theoretical frameworks
 - Optimization problems
 - Systems requiring practical implementation
+- Problems that need iterative refinement
+- Cases where experimental validation complements theory
 
 Key features:
-- Systematic progression through abstraction → constraints → modeling → proof → implementation
+- Systematic progression through problem definition → constraints → modeling → validation → implementation
+- Support for revising earlier steps as understanding evolves
+- Ability to mark steps for re-examination with new information
+- Experimental validation alongside formal proofs
 - Explicit tracking of assumptions and dependencies
 - Confidence levels for each step
-- Mathematical/theoretical framework development
-- Practical implementation considerations
+- Rich feedback and validation results
 
 Parameters explained:
-- thoughtType: Type of thinking step (ABSTRACTION, CONSTRAINTS, MODEL, PROOF, IMPLEMENTATION)
+- thoughtType: Type of thinking step (PROBLEM_DEFINITION, CONSTRAINTS, MODEL, PROOF, IMPLEMENTATION)
 - uncertainty: Confidence level in the current thought (0-1)
 - dependencies: Which previous thoughts this builds upon
 - assumptions: Explicit listing of assumptions made
-- proofElements: For validation steps
+- isRevision: Whether this revises an earlier thought
+- revisesThought: Which thought is being revised
+- recheckStep: For marking steps that need re-examination
+- proofElements: For formal validation steps
+- experimentalElements: For empirical validation
 - implementationNotes: For practical application steps
 
-The tool enforces Shannon's systematic approach:
-1. Abstract the problem to fundamental elements
-2. Identify system constraints and limitations
+The tool supports an iterative approach:
+1. Define the problem's fundamental elements (revisable as understanding grows)
+2. Identify system constraints and limitations (can be rechecked with new information)
 3. Develop mathematical/theoretical models
-4. Prove theoretical bounds
-5. Design practical implementations
+4. Validate through proofs and/or experimental testing
+5. Design and test practical implementations
 
-Each thought must explicitly state assumptions and build on previous steps, creating a rigorous problem-solving framework.`,
+Each thought can build on, revise, or re-examine previous steps, creating a flexible yet rigorous problem-solving framework.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -100,6 +109,35 @@ Each thought must explicitly state assumptions and build on previous steps, crea
         type: "boolean",
         description: "Whether another thought step is needed"
       },
+      isRevision: {
+        type: "boolean",
+        description: "Whether this thought revises an earlier one"
+      },
+      revisesThought: {
+        type: "integer",
+        description: "The thought number being revised",
+        minimum: 1
+      },
+      recheckStep: {
+        type: "object",
+        properties: {
+          stepToRecheck: {
+            type: "string",
+            enum: Object.values(ThoughtType),
+            description: "Which type of step needs re-examination"
+          },
+          reason: {
+            type: "string",
+            description: "Why the step needs to be rechecked"
+          },
+          newInformation: {
+            type: "string",
+            description: "New information prompting the recheck"
+          }
+        },
+        required: ["stepToRecheck", "reason"],
+        description: "For marking steps that need re-examination"
+      },
       proofElements: {
         type: "object",
         properties: {
@@ -113,7 +151,35 @@ Each thought must explicitly state assumptions and build on previous steps, crea
           }
         },
         required: ["hypothesis", "validation"],
-        description: "Elements required for proof/validation steps"
+        description: "Elements required for formal proof steps"
+      },
+      experimentalElements: {
+        type: "object",
+        properties: {
+          testDescription: {
+            type: "string",
+            description: "Description of the experimental test"
+          },
+          results: {
+            type: "string",
+            description: "Results of the experiment"
+          },
+          confidence: {
+            type: "number",
+            description: "Confidence in the experimental results (0-1)",
+            minimum: 0,
+            maximum: 1
+          },
+          limitations: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Limitations of the experimental validation"
+          }
+        },
+        required: ["testDescription", "results", "confidence", "limitations"],
+        description: "Elements for experimental validation"
       },
       implementationNotes: {
         type: "object",

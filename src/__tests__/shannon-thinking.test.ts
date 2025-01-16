@@ -12,7 +12,7 @@ describe('ShannonThinkingServer', () => {
     it('should process a valid thought successfully', () => {
       const validThought = {
         thought: "Test thought",
-        thoughtType: ThoughtType.ABSTRACTION,
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
         thoughtNumber: 1,
         totalThoughts: 1,
         uncertainty: 0.5,
@@ -27,7 +27,7 @@ describe('ShannonThinkingServer', () => {
         thoughtNumber: 1,
         totalThoughts: 1,
         nextThoughtNeeded: false,
-        thoughtType: ThoughtType.ABSTRACTION,
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
         uncertainty: 0.5,
         thoughtHistoryLength: 1
       });
@@ -48,7 +48,7 @@ describe('ShannonThinkingServer', () => {
       // First thought
       const thought1 = {
         thought: "First thought",
-        thoughtType: ThoughtType.ABSTRACTION,
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
         thoughtNumber: 1,
         totalThoughts: 2,
         uncertainty: 0.5,
@@ -98,7 +98,7 @@ describe('ShannonThinkingServer', () => {
     it('should validate uncertainty range', () => {
       const thoughtWithInvalidUncertainty = {
         thought: "Invalid uncertainty",
-        thoughtType: ThoughtType.ABSTRACTION,
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
         thoughtNumber: 1,
         totalThoughts: 1,
         uncertainty: 1.5, // Invalid: should be between 0 and 1
@@ -158,6 +158,112 @@ describe('ShannonThinkingServer', () => {
         thoughtNumber: 1,
         thoughtType: ThoughtType.IMPLEMENTATION
       });
+    });
+
+    it('should handle recheckStep correctly', () => {
+      const thoughtWithRecheck = {
+        thought: "Recheck thought",
+        thoughtType: ThoughtType.MODEL,
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        uncertainty: 0.4,
+        dependencies: [],
+        assumptions: [],
+        nextThoughtNeeded: true,
+        recheckStep: {
+          stepToRecheck: ThoughtType.CONSTRAINTS,
+          reason: "New information available",
+          newInformation: "Additional constraint discovered"
+        }
+      };
+
+      const result = server.processThought(thoughtWithRecheck);
+      expect(result.isError).toBeUndefined();
+      expect(JSON.parse(result.content[0].text)).toMatchObject({
+        thoughtNumber: 1,
+        thoughtType: ThoughtType.MODEL
+      });
+    });
+    it('should handle experimentalElements correctly', () => {
+      const thoughtWithExperiment = {
+        thought: "Experimental validation",
+        thoughtType: ThoughtType.PROOF,
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        uncertainty: 0.3,
+        dependencies: [],
+        assumptions: [],
+        nextThoughtNeeded: false,
+        experimentalElements: {
+          testDescription: "Test case scenario",
+          results: "Observed behavior matches expected",
+          confidence: 0.85,
+          limitations: ["Limited test coverage", "Specific environment only"]
+        }
+      };
+
+      const result = server.processThought(thoughtWithExperiment);
+      expect(result.isError).toBeUndefined();
+      expect(JSON.parse(result.content[0].text)).toMatchObject({
+        thoughtNumber: 1,
+        thoughtType: ThoughtType.PROOF
+      });
+    });
+
+    it('should handle thought revisions correctly', () => {
+      // First thought
+      const originalThought = {
+        thought: "Original thought",
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
+        thoughtNumber: 1,
+        totalThoughts: 2,
+        uncertainty: 0.5,
+        dependencies: [],
+        assumptions: [],
+        nextThoughtNeeded: true
+      };
+
+      // Revision of first thought
+      const revisionThought = {
+        thought: "Revised definition",
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
+        thoughtNumber: 2,
+        totalThoughts: 2,
+        uncertainty: 0.3,
+        dependencies: [1],
+        assumptions: [],
+        nextThoughtNeeded: false,
+        isRevision: true,
+        revisesThought: 1
+      };
+
+      server.processThought(originalThought);
+      const result = server.processThought(revisionThought);
+      expect(result.isError).toBeUndefined();
+      expect(JSON.parse(result.content[0].text)).toMatchObject({
+        thoughtNumber: 2,
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
+        thoughtHistoryLength: 2
+      });
+    });
+
+    it('should validate revision fields correctly', () => {
+      const invalidRevision = {
+        thought: "Invalid revision",
+        thoughtType: ThoughtType.PROBLEM_DEFINITION,
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        uncertainty: 0.5,
+        dependencies: [],
+        assumptions: [],
+        nextThoughtNeeded: false,
+        revisesThought: 2, // Invalid: can't revise future thought
+        isRevision: true
+      };
+
+      const result = server.processThought(invalidRevision);
+      expect(result.isError).toBe(true);
+      expect(JSON.parse(result.content[0].text).error).toContain('Invalid revision');
     });
   });
 });
