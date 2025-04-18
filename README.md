@@ -1,6 +1,6 @@
 # shannon-thinking
 
-An MCP server implementing Claude Shannon's systematic problem-solving methodology. This server provides a tool that helps break down complex problems into structured thoughts following Shannon's approach of problem definition, mathematical modeling, and practical implementation.
+An MCP server demonstrating Claude Shannon's systematic problem-solving methodology. This server provides a tool that helps break down complex problems into structured thoughts following Shannon's approach of problem definition, mathematical modeling, and practical implementation.
 
 ## Overview
 
@@ -12,12 +12,24 @@ Claude Shannon, known as the father of information theory, approached complex pr
 4. **Proof/Validation**: Validate through formal proofs or experimental testing
 5. **Implementation/Experiment**: Design and test practical solutions
 
-This MCP server implements this methodology as a tool that helps guide systematic problem-solving through these stages.
+This MCP server demonstrates this methodology as a tool that helps guide systematic problem-solving through these stages.
 
 ## Installation
 
-```bash
-npm install @modelcontextprotocol/server-shannon-thinking
+### NPX
+
+```json
+{
+  "mcpServers": {
+    "shannon-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "shannon-thinking@latest"
+      ]
+    }
+  }
+}
 ```
 
 ## Usage
@@ -138,7 +150,7 @@ interface ShannonThought {
 
 ## When to Use
 
-This tool is particularly valuable for:
+This thinking pattern is particularly valuable for:
 - Complex system analysis
 - Information processing problems
 - Engineering design challenges
@@ -147,7 +159,3 @@ This tool is particularly valuable for:
 - Systems requiring practical implementation
 - Problems that need iterative refinement
 - Cases where experimental validation complements theory
-
-## License
-
-MIT
