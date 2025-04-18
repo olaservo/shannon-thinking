@@ -25,7 +25,7 @@ This MCP server demonstrates this methodology as a tool that helps guide systema
       "command": "npx",
       "args": [
         "-y",
-        "shannon-thinking@latest"
+        "server-shannon-thinking@latest"
       ]
     }
   }
