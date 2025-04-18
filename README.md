@@ -2,6 +2,10 @@
 
 An MCP server demonstrating Claude Shannon's systematic problem-solving methodology. This server provides a tool that helps break down complex problems into structured thoughts following Shannon's approach of problem definition, mathematical modeling, and practical implementation.
 
+<a href="https://glama.ai/mcp/servers/iffffhwqqw">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/iffffhwqqw/badge" alt="Shannon Thinking Server MCP server" />
+</a>
+
 ## Overview
 
 Claude Shannon, known as the father of information theory, approached complex problems through a systematic methodology:
