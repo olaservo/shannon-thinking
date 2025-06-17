@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/olaservo-shannon-thinking-badge.png)](https://mseep.ai/app/olaservo-shannon-thinking)
+
 # shannon-thinking
 
 An MCP server demonstrating Claude Shannon's systematic problem-solving methodology. This server provides a tool that helps break down complex problems into structured thoughts following Shannon's approach of problem definition, mathematical modeling, and practical implementation.
