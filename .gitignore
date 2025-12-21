@@ -23,5 +23,8 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# npm auth
+.npmrc
+
 # Test coverage
 coverage/
