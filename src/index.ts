@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
-import { Server, Tool } from "@modelcontextprotocol/server";
+import { Server } from "@modelcontextprotocol/server";
+import type { Tool } from "@modelcontextprotocol/server";
 import { ThoughtType, ShannonThoughtData } from "./types.js";
 import { ShannonThinkingServer } from "./server.js";
 
@@ -202,7 +203,7 @@ Each thought can build on, revise, or re-examine previous steps, creating a flex
 const server = new Server(
   {
     name: "shannon-thinking-server",
-    version: "0.1.0",
+    version: "0.1.1",
   },
   {
     capabilities: {
