@@ -1,12 +1,7 @@
 #!/usr/bin/env node
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-} from "@modelcontextprotocol/sdk/types.js";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { Server, Tool } from "@modelcontextprotocol/server";
 import { ThoughtType, ShannonThoughtData } from "./types.js";
 import { ShannonThinkingServer } from "./server.js";
 
@@ -218,11 +213,11 @@ const server = new Server(
 
 const thinkingServer = new ShannonThinkingServer();
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
+server.setRequestHandler('tools/list', async () => ({
   tools: [SHANNON_THINKING_TOOL],
 }));
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler('tools/call', async (request) => {
   if (request.params.name === "shannonthinking") {
     return thinkingServer.processThought(request.params.arguments);
   }

@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 import { ShannonThoughtData, ThoughtType } from './types.js';
 
 export class ShannonThinkingServer {
@@ -202,7 +203,7 @@ export class ShannonThinkingServer {
     return output;
   }
 
-  public processThought(input: unknown): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+  public processThought(input: unknown): CallToolResult {
     try {
       const validatedInput = this.validateThoughtData(input);
 

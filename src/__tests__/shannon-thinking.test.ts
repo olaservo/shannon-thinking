@@ -1,5 +1,18 @@
+import type { CallToolResult } from '@modelcontextprotocol/server';
 import { ThoughtType } from '../types.js';
 import { ShannonThinkingServer } from '../server.js';
+
+/**
+ * Reads the text of the first content block. `content` is a union of block types
+ * in the SDK's typed result, so narrow to the text block before reading `.text`.
+ */
+function firstText(result: CallToolResult): string {
+  const block = result.content[0];
+  if (block?.type !== 'text') {
+    throw new Error(`Expected a text content block, got ${block?.type}`);
+  }
+  return block.text;
+}
 
 describe('ShannonThinkingServer', () => {
   let server: ShannonThinkingServer;
@@ -23,7 +36,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(validThought);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 1,
         totalThoughts: 1,
         nextThoughtNeeded: false,
@@ -41,7 +54,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(invalidThought);
       expect(result.isError).toBe(true);
-      expect(JSON.parse(result.content[0].text)).toHaveProperty('error');
+      expect(JSON.parse(firstText(result))).toHaveProperty('error');
     });
 
     it('should validate dependencies correctly', () => {
@@ -72,7 +85,7 @@ describe('ShannonThinkingServer', () => {
       server.processThought(thought1);
       const result = server.processThought(thought2);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 2,
         thoughtHistoryLength: 2
       });
@@ -92,7 +105,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithInvalidDep);
       expect(result.isError).toBe(true);
-      expect(JSON.parse(result.content[0].text).error).toContain('Invalid dependency');
+      expect(JSON.parse(firstText(result)).error).toContain('Invalid dependency');
     });
 
     it('should validate uncertainty range', () => {
@@ -109,7 +122,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithInvalidUncertainty);
       expect(result.isError).toBe(true);
-      expect(JSON.parse(result.content[0].text).error).toContain('uncertainty');
+      expect(JSON.parse(firstText(result)).error).toContain('uncertainty');
     });
 
     it('should handle proof elements correctly', () => {
@@ -130,7 +143,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithProof);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 1,
         thoughtType: ThoughtType.PROOF
       });
@@ -154,7 +167,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithImplementation);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 1,
         thoughtType: ThoughtType.IMPLEMENTATION
       });
@@ -179,7 +192,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithRecheck);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 1,
         thoughtType: ThoughtType.MODEL
       });
@@ -204,7 +217,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(thoughtWithExperiment);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 1,
         thoughtType: ThoughtType.PROOF
       });
@@ -240,7 +253,7 @@ describe('ShannonThinkingServer', () => {
       server.processThought(originalThought);
       const result = server.processThought(revisionThought);
       expect(result.isError).toBeUndefined();
-      expect(JSON.parse(result.content[0].text)).toMatchObject({
+      expect(JSON.parse(firstText(result))).toMatchObject({
         thoughtNumber: 2,
         thoughtType: ThoughtType.PROBLEM_DEFINITION,
         thoughtHistoryLength: 2
@@ -263,7 +276,7 @@ describe('ShannonThinkingServer', () => {
 
       const result = server.processThought(invalidRevision);
       expect(result.isError).toBe(true);
-      expect(JSON.parse(result.content[0].text).error).toContain('Invalid revision');
+      expect(JSON.parse(firstText(result)).error).toContain('Invalid revision');
     });
   });
 });
