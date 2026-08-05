@@ -203,7 +203,7 @@ Each thought can build on, revise, or re-examine previous steps, creating a flex
 const server = new Server(
   {
     name: "shannon-thinking-server",
-    version: "0.1.1",
+    version: "0.2.0",
   },
   {
     capabilities: {
