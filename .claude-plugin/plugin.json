@@ -1,0 +1,14 @@
+{
+  "name": "shannon-thinking",
+  "version": "0.1.1",
+  "description": "Shannon-inspired structured thinking MCP server",
+  "author": {
+    "name": "olaservo"
+  },
+  "mcpServers": {
+    "shannon-thinking": {
+      "command": "npx",
+      "args": ["-y", "server-shannon-thinking@latest"]
+    }
+  }
+}

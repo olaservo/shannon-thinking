@@ -1,0 +1,17 @@
+{
+  "name": "shannon-thinking",
+  "owner": {
+    "name": "olaservo"
+  },
+  "metadata": {
+    "description": "Shannon-inspired structured thinking MCP server for Claude Code",
+    "version": "0.1.1"
+  },
+  "plugins": [
+    {
+      "name": "shannon-thinking",
+      "description": "Structured thinking tool using Shannon's information-theoretic approach",
+      "source": "./"
+    }
+  ]
+}
